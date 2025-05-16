@@ -7,20 +7,38 @@ import {
   Button,
   Typography,
   Paper,
+  Alert,
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { signIn, signUp } = useAuth();
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Here you would typically handle authentication
-    navigate('/dashboard');
+    setError('');
+
+    try {
+      if (isSignUp) {
+        const { error } = await signUp(formData.email, formData.password);
+        if (error) throw error;
+        setError('Check your email for verification link');
+      } else {
+        const { error } = await signIn(formData.email, formData.password);
+        if (error) throw error;
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      setError(error.message);
+    }
   };
 
   const handleChange = (e) => {
@@ -61,8 +79,13 @@ export default function Login() {
             <LockOutlinedIcon sx={{ color: 'white' }} />
           </Box>
           <Typography component="h1" variant="h5">
-            Sign in
+            {isSignUp ? 'Sign Up' : 'Sign In'}
           </Typography>
+          {error && (
+            <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
+              {error}
+            </Alert>
+          )}
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
             <TextField
               margin="normal"
@@ -94,7 +117,16 @@ export default function Login() {
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
             >
-              Sign In
+              {isSignUp ? 'Sign Up' : 'Sign In'}
+            </Button>
+            <Button
+              fullWidth
+              onClick={() => setIsSignUp(!isSignUp)}
+              sx={{ mt: 1 }}
+            >
+              {isSignUp
+                ? 'Already have an account? Sign In'
+                : "Don't have an account? Sign Up"}
             </Button>
           </Box>
         </Paper>
